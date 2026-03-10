@@ -1,0 +1,14 @@
+﻿namespace SupplySync.Constants.Enums
+{
+	
+		public enum WarehouseStatus
+		{
+
+		Active = 1,
+		Inactive = 2,
+		UnderMaintenance = 3
+
+	}
+}
+
+
