@@ -19,9 +19,11 @@ namespace SupplySync.Models
 		[Required, MaxLength(200)]
 		public string Resource { get; set; } 
 
-		public DateTime Timestamp { get; set; } 
+		public DateTime Timestamp { get; set; }
 
- 		public DateTime CreatedAt { get; set; } 
+		public bool IsDeleted { get; set; }
+
+		public DateTime CreatedAt { get; set; } 
 
  		public DateTime UpdatedAt { get; set; } 
 

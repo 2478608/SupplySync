@@ -18,6 +18,8 @@ namespace SupplySync.Models
 		[Required]
 		public string Message { get; set; }   // TEXT (no HTML)
 
+		public bool IsDeleted { get; set; }
+
 		[Required]
 		public NotificationCategory Category { get; set; } // VARCHAR(20)
 

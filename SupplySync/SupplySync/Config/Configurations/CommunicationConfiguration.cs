@@ -8,7 +8,13 @@ namespace SupplySync.Config.Configurations
     {
         public void Configure(EntityTypeBuilder<Notification> builder)
         {
-            builder.Property(x => x.Message).IsRequired();
+
+			builder.HasKey(x => x.NotificationID);
+			builder.Property(x => x.NotificationID)
+				   .ValueGeneratedOnAdd();
+
+            builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+			builder.Property(x => x.Message).IsRequired();
 
             builder.Property(x => x.Category).HasConversion<string>().HasMaxLength(20);
             builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);

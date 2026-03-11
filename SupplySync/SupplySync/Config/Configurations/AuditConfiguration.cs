@@ -39,10 +39,14 @@ namespace SupplySync.Config.Configurations
     {
         public void Configure(EntityTypeBuilder<AuditLog> builder)
         {
-            builder.Property(x => x.Action).IsRequired().HasMaxLength(100);
-            builder.Property(x => x.Resource).IsRequired().HasMaxLength(200);
+			builder.HasKey(x => x.AuditID);
+			builder.Property(x => x.AuditID)
+				   .ValueGeneratedOnAdd();
 
-            builder.Property(x => x.Timestamp).HasDefaultValueSql("GETUTCDATE()");
+			builder.Property(x => x.Action).IsRequired().HasMaxLength(100);
+            builder.Property(x => x.Resource).IsRequired().HasMaxLength(200);
+			builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+			builder.Property(x => x.Timestamp).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 

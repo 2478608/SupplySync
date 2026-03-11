@@ -32,8 +32,10 @@ namespace SupplySync.Config.Configurations
             builder.HasKey(x => x.RoleID);
             builder.Property(x => x.RoleID)
                    .ValueGeneratedOnAdd();
+
             builder.Property(x => x.RoleType).HasConversion<string>().HasMaxLength(30);
-            builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+			builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+			builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
         }
     }
@@ -42,13 +44,14 @@ namespace SupplySync.Config.Configurations
     {
         public void Configure(EntityTypeBuilder<UserRole> builder)
         {
-            // Use the ID property as PK (to match your model)
-            builder.HasKey(x => x.UserRoleID);
+			// Use the ID property as PK (to match your model)
+			builder.HasKey(x => x.UserRoleID);
+			builder.Property(x => x.UserRoleID)
+				   .ValueGeneratedOnAdd(); ;
 
             // Ensure uniqueness of (UserID, RoleID)
             builder.HasIndex(ur => new { ur.UserID, ur.RoleID }).IsUnique();
-
-            builder.Property(x => x.IsActive).HasDefaultValue(true);
+            builder.Property(x => x.IsDeleted).HasDefaultValue(false);
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
