@@ -12,6 +12,8 @@ namespace SupplySync.Models
 
 		[Required]
 		public RoleType RoleType { get; set; } // Enum -> stored as string
+
+		public bool IsDeleted { get; set; } 
  		public DateTime CreatedAt { get; set; } 
 		public DateTime UpdatedAt { get; set; } 
 		public ICollection<UserRole> UserRoles { get; set; } 
