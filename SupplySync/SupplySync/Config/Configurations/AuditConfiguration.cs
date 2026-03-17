@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SupplySync.Constants.Enums;
 using SupplySync.Models;
 
 namespace SupplySync.Config.Configurations
@@ -12,18 +13,20 @@ namespace SupplySync.Config.Configurations
             builder.Property(x => x.AuditID)
                    .ValueGeneratedOnAdd();
             builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+            builder.Property(x => x.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20)
+                    .HasDefaultValue(AuditStatus.Planned);
 
-            builder.Property(x => x.Scope).IsRequired().HasMaxLength(200);
 
-            // Enum as string
-            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            builder.Property(x => x.Scope)
+                            .IsRequired()
+                            .HasMaxLength(200);
 
-            // DateOnly -> date
+
             builder.Property(x => x.Date)
-                   .HasConversion(
-                        v => v.ToDateTime(TimeOnly.MinValue),
-                        v => DateOnly.FromDateTime(v))
-                   .HasColumnType("date");
+                            .HasColumnType("date");
+
 
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 

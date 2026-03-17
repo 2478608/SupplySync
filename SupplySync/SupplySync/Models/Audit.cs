@@ -26,11 +26,9 @@ namespace SupplySync.Models
          public AuditStatus Status { get; set; } // maps to varchar
 
         public bool IsDeleted { get; set; }
-
-
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual User ComplianceOfficer { get; set; } = default!;
+        public User ComplianceOfficer { get; set; } = default!;
     }
 }
