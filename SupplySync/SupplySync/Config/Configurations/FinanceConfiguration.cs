@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SupplySync.Constants.Enums;
 using SupplySync.Models;
 
 namespace SupplySync.Config.Configurations
@@ -14,7 +15,7 @@ namespace SupplySync.Config.Configurations
 
             builder.Property(x => x.IsDeleted).HasDefaultValue(false);
             builder.Property(x => x.Amount).HasPrecision(18, 2);
-            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).HasDefaultValue(InvoiceStatus.Submitted);
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
@@ -43,7 +44,7 @@ namespace SupplySync.Config.Configurations
             builder.Property(x => x.IsDeleted).HasDefaultValue(false);
             builder.Property(x => x.Amount).HasPrecision(18, 2);
             builder.Property(x => x.Method).HasConversion<string>().HasMaxLength(20);
-            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).HasDefaultValue(PaymentStatus.Initiated);
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 
