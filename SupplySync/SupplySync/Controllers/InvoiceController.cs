@@ -15,15 +15,39 @@ namespace SupplySync.Controllers
             _invoiceService = invoiceService;
         }
 
-        [HttpPost("submit")]
-        public async Task<IActionResult> SubmitInvoice([FromBody] CreateInvoiceRequestDto dto)
+        [HttpPost]
+        public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceRequestDto dto)
         {
+            if (dto.Amount <= 0) return BadRequest("Amount must be greater than zero.");
             var id = await _invoiceService.CreateInvoiceAsync(dto);
-            return Ok(new
-            {
-                Message = "Invoice submitted successfully to the Finance Dashboard",
-                InvoiceID = id
-            });
+            return Ok(new{ Message = "Invoice submitted successfully", InvoiceID = id });
+        }
+
+        [HttpPut("{invoiceId}")]
+        public async Task<IActionResult> UpdateInvoice(int invoiceId, [FromBody] UpdateInvoiceRequestDto dto)
+        {
+            
+                await _invoiceService.UpdateInvoiceAsync(invoiceId, dto);
+                return Ok(new
+                {
+                    Message = "Invoice updated successfully",
+                    InvoiceID = invoiceId
+                });
+        }
+        
+
+        [HttpGet("{invoiceId}")]
+        public async Task<IActionResult> GetInvoice(int invoiceId)
+        {
+            var response = await _invoiceService.GetInvoiceByIdAsync(invoiceId);
+            return response == null ? NotFound(new { Message = $"Invoice {invoiceId} not found." }) : Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListInvoices()
+        {
+            var response = await _invoiceService.GetInvoiceListAsync();
+            return Ok(response);
         }
     }
 }

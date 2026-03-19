@@ -6,6 +6,7 @@ namespace SupplySync.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+
     public class AuditController : ControllerBase
     {
         private readonly IAuditService _service;
