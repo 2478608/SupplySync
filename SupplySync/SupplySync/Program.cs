@@ -25,6 +25,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IComplianceRecordRepository, ComplianceRecordRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
+builder.Services.AddScoped<IContractRepository, ContractRepository>();
 
 // --------------------
 // SERVICES
@@ -32,13 +34,14 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IComplianceRecordService, ComplianceRecordService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 
 // --------------------
 // CONTROLLERS & API
 // --------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
 
 
 var app = builder.Build();
@@ -51,10 +54,11 @@ if (app.Environment.IsDevelopment())
 // --------------------
 // PIPELINE
 // --------------------
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-app.UseMiddleware<ErrorHandlingMiddleware>();
+
 
 app.Run();
 
