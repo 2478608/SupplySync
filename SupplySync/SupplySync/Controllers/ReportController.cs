@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SupplySync.DTOs.Report;
 using SupplySync.Services.Interfaces;
 
@@ -6,6 +7,7 @@ namespace SupplySync.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin,ComplianceOfficer,ProcurementOfficer,FinanceOfficer,WarehouseManager")]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _service;
@@ -16,6 +18,7 @@ namespace SupplySync.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,ComplianceOfficer")]
         public async Task<IActionResult> Create([FromBody] CreateReportRequestDto dto)
         {
             var id = await _service.CreateAsync(dto);
@@ -23,6 +26,7 @@ namespace SupplySync.Controllers
         }
 
         [HttpPut("{reportId}")]
+        [Authorize(Roles = "Admin,ComplianceOfficer")]
         public async Task<IActionResult> Update(int reportId, [FromBody] UpdateReportRequestDto dto)
         {
             var updated = await _service.UpdateAsync(reportId, dto);
@@ -53,6 +57,7 @@ namespace SupplySync.Controllers
         }
 
         [HttpDelete("{reportId}")]
+        [Authorize(Roles = "Admin,ComplianceOfficer")]
         public async Task<IActionResult> Delete(int reportId)
         {
             var ok = await _service.DeleteAsync(reportId);

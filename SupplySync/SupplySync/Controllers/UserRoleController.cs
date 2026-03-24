@@ -14,6 +14,7 @@ namespace SupplySync.Controllers
 		public UserRoleController(IUserRoleService userRoleService) => _userRoleService = userRoleService;
 
 		[HttpPost("users/{id:int}/roles")]
+		
 		public async Task<IActionResult> Assign(int id, [FromBody] CreateUserRoleRequestDto dto)
 		{
 			var result = await _userRoleService.AssignRoleToUserAsync(id, dto);
