@@ -1,0 +1,66 @@
+using Microsoft.AspNetCore.Mvc;
+using SupplySync.DTOs.InventoryandWarehouse;
+using SupplySync.Services.Interfaces;
+
+namespace SupplySync.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InventoryController : ControllerBase
+    {
+        private readonly IInventoryService _service;
+
+        public InventoryController(IInventoryService service)
+        {
+            _service = service;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateInventoryRequestDto dto)
+        {
+            var id = await _service.CreateAsync(dto);
+            return Ok(new { Message = "Inventory created", InventoryID = id });
+        }
+
+        [HttpPut("{inventoryId}")]
+        public async Task<IActionResult> Update(int inventoryId, [FromBody] UpdateInventoryRequestDto dto)
+        {
+            var updated = await _service.UpdateAsync(inventoryId, dto);
+            if (updated == null)
+                return NotFound(new { Message = "Inventory not found" });
+
+            return Ok(updated);
+        }
+
+        [HttpGet("{inventoryId}")]
+        public async Task<IActionResult> Get(int inventoryId)
+        {
+            var record = await _service.GetByIdAsync(inventoryId);
+            if (record == null)
+                return NotFound(new { Message = "Inventory not found" });
+
+            return Ok(record);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> List(
+            [FromQuery] int? warehouseId,
+            [FromQuery] string? item,
+            [FromQuery] string? status,
+            [FromQuery] DateOnly? fromDate,
+            [FromQuery] DateOnly? toDate)
+        {
+            var list = await _service.ListAsync(warehouseId, item, status, fromDate, toDate);
+            return Ok(list);
+        }
+
+        [HttpDelete("{inventoryId}")]
+        public async Task<IActionResult> Delete(int inventoryId)
+        {
+            var ok = await _service.DeleteAsync(inventoryId);
+            if (!ok) return NotFound(new { Message = "Inventory not found" });
+
+            return Ok(new { Message = "Inventory deleted" });
+        }
+    }
+}
