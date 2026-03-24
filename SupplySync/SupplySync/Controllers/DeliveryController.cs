@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SupplySync.Config;
@@ -7,6 +8,7 @@ using SupplySync.Models;
 
 namespace SupplySync.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/deliveries")]
     public class DeliveryController : ControllerBase
@@ -20,6 +22,7 @@ namespace SupplySync.Controllers
             _mapper = mapper;
         }
 
+        [Authorize(Roles = "Admin,WarehouseManager,VendorUser")]
         [HttpPost]
         public async Task<ActionResult<DeliveryResponseDto>> CreateDelivery(CreateDeliveryRequestDto request)
         {
@@ -35,6 +38,7 @@ namespace SupplySync.Controllers
             return Ok(_mapper.Map<DeliveryResponseDto>(delivery));
         }
 
+        [Authorize(Roles = "Admin,WarehouseManager")]
         [HttpPut("{deliveryId}")]
         public async Task<ActionResult<DeliveryResponseDto>> UpdateDelivery(int deliveryId, UpdateDeliveryRequestDto request)
         {
@@ -48,6 +52,7 @@ namespace SupplySync.Controllers
             return Ok(_mapper.Map<DeliveryResponseDto>(delivery));
         }
 
+        [Authorize(Roles = "Admin,WarehouseManager,ProcurementOfficer,ComplianceOfficer")]
         [HttpGet("{deliveryId}")]
         public async Task<ActionResult<DeliveryResponseDto>> GetDelivery(int deliveryId)
         {
@@ -61,6 +66,7 @@ namespace SupplySync.Controllers
             return Ok(_mapper.Map<DeliveryResponseDto>(delivery));
         }
 
+        [Authorize(Roles = "Admin,ProcurementOfficer,WarehouseManager,ComplianceOfficer")]
         [HttpGet]
         public async Task<ActionResult<DeliveryListResponseDto>> ListDeliveries([FromQuery] int? poId)
         {

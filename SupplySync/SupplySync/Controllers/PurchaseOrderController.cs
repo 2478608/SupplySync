@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SupplySync.Config; 
@@ -7,6 +8,7 @@ using SupplySync.Models;
 
 namespace SupplySync.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/purchase-orders")]
     public class PurchaseOrderController : ControllerBase
@@ -20,6 +22,7 @@ namespace SupplySync.Controllers
             _mapper = mapper;
         }
 
+        [Authorize(Roles = "Admin,ProcurementOfficer")]
         [HttpPost]
         public async Task<ActionResult<PurchaseOrderResponseDto>> CreatePurchaseOrder(CreatePurchaseOrderRequestDto request)
         {
@@ -32,6 +35,7 @@ namespace SupplySync.Controllers
             return CreatedAtAction(nameof(GetPurchaseOrder), new { poId = response.POID }, response);
         }
 
+        [Authorize(Roles = "Admin,ProcurementOfficer,FinanceOfficer")]
         [HttpPut("{poId}")]
         public async Task<ActionResult<PurchaseOrderResponseDto>> UpdatePurchaseOrder(int poId, UpdatePurchaseOrderRequestDto request)
         {
@@ -45,6 +49,7 @@ namespace SupplySync.Controllers
             return Ok(_mapper.Map<PurchaseOrderResponseDto>(po));
         }
 
+        [Authorize(Roles = "Admin,ProcurementOfficer,VendorUser,FinanceOfficer,ComplianceOfficer")]
         [HttpGet("{poId}")]
         public async Task<ActionResult<PurchaseOrderResponseDto>> GetPurchaseOrder(int poId)
         {
@@ -57,6 +62,7 @@ namespace SupplySync.Controllers
             return Ok(_mapper.Map<PurchaseOrderResponseDto>(po));
         }
 
+        [Authorize(Roles = "Admin,ProcurementOfficer,WarehouseManager,FinanceOfficer,ComplianceOfficer")]
         [HttpGet]
         public async Task<ActionResult<PurchaseOrderListResponseDto>> ListPurchaseOrders([FromQuery] string? itemFilter)
         {
