@@ -42,24 +42,25 @@ namespace SupplySync.Services
             var user = await _userRepository.GetByEmailWithRolesAsync(email)
                 ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
-            if (user.Status == UserStatus.Inactive ||
-                user.Status == UserStatus.Suspended ||
-                user.Status == UserStatus.Pending)
-            {
-                throw new UnauthorizedAccessException("User is not active.");
-            }
+			// Verify password
+			var verify = _passwordHasher.VerifyHashedPassword(user, user.Password, dto.Password);
+			if (verify == PasswordVerificationResult.Failed)
+				throw new UnauthorizedAccessException("Invalid credentials.");
 
-            // Verify password
-            var verify = _passwordHasher.VerifyHashedPassword(user, user.Password, dto.Password);
-            if (verify == PasswordVerificationResult.Failed)
-                throw new UnauthorizedAccessException("Invalid credentials.");
+			if (user.Status == UserStatus.Inactive ||
+				user.Status == UserStatus.Suspended ||
+				user.Status == UserStatus.Pending)
+			{
+				throw new UnauthorizedAccessException("User is not active.");
+			}
 
-            await _auditLogService.WriteAsync(
-                userId: user.UserID,               // actor (or null if system)
-                userName: user.Name,               // optional (not persisted in model)
-                action: "UserLoggedIn",
-                resource: $"User:{user.UserID}"
-            );
+
+			await _auditLogService.WriteAsync(
+				userId: user.UserID,               // actor (or null if system)
+				userName: user.Name,               // optional (not persisted in model)
+				action: "UserCreated",
+				resource: $"User:{user.UserID}"
+			);
 
             await _notificationService.CreateAsync(new CreateNotificationRequestDto
             {

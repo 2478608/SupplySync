@@ -1,4 +1,5 @@
 ﻿// /SupplySync/Controllers/UserRoleController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplySync.Constants.Enums;
 using SupplySync.DTOs.UserRoles;
@@ -14,7 +15,7 @@ namespace SupplySync.Controllers
 		public UserRoleController(IUserRoleService userRoleService) => _userRoleService = userRoleService;
 
 		[HttpPost("users/{id:int}/roles")]
-		
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> Assign(int id, [FromBody] CreateUserRoleRequestDto dto)
 		{
 			var result = await _userRoleService.AssignRoleToUserAsync(id, dto);
@@ -22,6 +23,7 @@ namespace SupplySync.Controllers
 		}
 
 		[HttpGet("users/{id:int}/roles")]
+		[Authorize]
 		public async Task<IActionResult> List(int id)
 		{
 			var result = await _userRoleService.GetRolesForUserAsync(id);
@@ -29,6 +31,7 @@ namespace SupplySync.Controllers
 		}
 
 		[HttpPut("users/{id:int}/roles")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRoleRequestDto dto)
 		{
 			var result = await _userRoleService.UpdateUserRoleAsync(id, dto);
@@ -36,12 +39,13 @@ namespace SupplySync.Controllers
 		}
 
 		[HttpDelete("users/{id:int}/roles/{roleType}")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> Remove(int id, string roleType)
 		{
 			if (!Enum.TryParse<RoleType>(roleType, ignoreCase: true, out var parsed)) return BadRequest(new { Message = $"Invalid roleType '{roleType}'." });
 
 			await _userRoleService.RemoveRoleFromUserAsync(id, parsed);
-			return NoContent();
+			return Ok("User role removed successfully");
 		}
 	}
 }

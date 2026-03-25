@@ -17,9 +17,6 @@ namespace SupplySync.DTOs.User
 		[Required, MinLength(8)]
 		[DataType(DataType.Password)]
 		public string Password { get; set; } = default!;
-
-		[Required]
-		public UserStatus Status { get; set; } = UserStatus.Pending;
 	}
 }
 	

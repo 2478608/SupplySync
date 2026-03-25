@@ -1,4 +1,5 @@
 ﻿// /SupplySync/Controllers/AuditController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplySync.DTOs.AuditLog;
 using SupplySync.Services.Interfaces;
@@ -14,7 +15,7 @@ namespace SupplySync.Controllers
 
 		// GET /audit?userId=&action=&resource=&fromUtc=&toUtc=&search=&pageNumber=1&pageSize=20&desc=true
 		[HttpGet("audit")]
-		// [Authorize(Roles = "Admin,ComplianceOfficer")] // uncomment to enforce RBAC
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> Get([FromQuery] AuditLogFiltersDto filters)
 		{
 			var result = await _auditService.GetAuditLogsAsync(filters);

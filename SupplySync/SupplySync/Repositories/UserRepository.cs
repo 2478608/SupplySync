@@ -54,9 +54,9 @@ namespace SupplySync.Repositories
 			{
 				return await _context.Users
 				.AsNoTracking()
-					.Include(u => u.UserRoles.Where(ur => !ur.IsDeleted))
-						.ThenInclude(ur => ur.Role)
-							.FirstOrDefaultAsync(u => u.UserID == id);
+				.Include(u => u.UserRoles.Where(ur => !ur.IsDeleted))
+				.ThenInclude(ur => ur.Role)
+				.FirstOrDefaultAsync(u => u.UserID == id);
 			}
 		}
 

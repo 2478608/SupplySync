@@ -78,6 +78,15 @@ namespace SupplySync.Services
 			};
 
 			var created = await _userRoleRepository.InsertAsync(userRole);
+
+			// After successful role assignment or reactivation
+			if (user.Status != UserStatus.Active)
+			{
+				user.Status = UserStatus.Active;
+				user.UpdatedAt = DateTime.UtcNow;
+				await _userRepository.UpdateAsync(user);
+			}
+
 			var loadedNew = await _userRoleRepository.GetWithRoleAsync(created.UserRoleID)
 				?? throw new KeyNotFoundException("Assigned role could not be retrieved.");
 

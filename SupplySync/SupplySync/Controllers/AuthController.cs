@@ -1,4 +1,5 @@
 ﻿// /SupplySync/Controllers/AuthController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplySync.DTOs.User;
 using SupplySync.Services.Interfaces;
@@ -13,6 +14,7 @@ namespace SupplySync.Controllers
 		public AuthController(IAuthService authService) => _authService = authService;
 
 		[HttpPost("login")]
+		[AllowAnonymous]
 		public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
 		{
 				var result = await _authService.LoginAsync(dto);

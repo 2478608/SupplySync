@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SupplySync.Constants.Enums;
 using SupplySync.DTOs.User;
 using SupplySync.Models;
 using SupplySync.Repositories.Interfaces;
@@ -29,14 +30,23 @@ namespace SupplySync.Services
 		// Existing create method (shown for completeness if you have it)
 		public async Task<int> CreateUserAsync(CreateUserRequestDto dto)
 		{
+
+			if (dto.Email.Contains(' ')) throw new ArgumentException("Email cannot contain spaces.");
+
 			var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
 
 			if (await _userRepository.EmailExistsAsync(normalizedEmail))
 				throw new InvalidOperationException("Email already in use.");
 
+
+			ValidatePassword(dto.Password);
+
 			var user = _mapper.Map<User>(dto);
 			user.Email = normalizedEmail;
 			user.Password = _passwordHasher.HashPassword(user, dto.Password);
+
+			user.Status = UserStatus.Pending;
+
 			var created = await _userRepository.InsertAsync(user);
 			return created.UserID;
 		}
@@ -54,6 +64,8 @@ namespace SupplySync.Services
 
 			if (dto.Email is not null)
 			{
+				if (dto.Email.Contains(' ')) throw new ArgumentException("Email cannot contain spaces.");
+
 				var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
 
 				if (await _userRepository.EmailExistsForOtherAsync(normalizedEmail, id))
@@ -66,7 +78,10 @@ namespace SupplySync.Services
 				user.Phone = dto.Phone;
 
 			if (!string.IsNullOrEmpty(dto.Password))
+			{
+				ValidatePassword(dto.Password);
 				user.Password = _passwordHasher.HashPassword(user, dto.Password);
+			}
 
 			if (dto.Status.HasValue)
 				user.Status = dto.Status.Value;
@@ -103,6 +118,28 @@ namespace SupplySync.Services
 				PageSize = pageSize,
 				TotalCount = total
 			};
+		}
+
+		private static void ValidatePassword(string password)
+		{
+			if (string.IsNullOrWhiteSpace(password))
+				throw new ArgumentException("Password cannot be empty.");
+
+			if (password.Length < 8)
+				throw new ArgumentException("Password must be at least 8 characters long.");
+
+			if (!password.Any(char.IsUpper))
+				throw new ArgumentException("Password must contain at least one uppercase letter.");
+
+			if (!password.Any(char.IsDigit))
+				throw new ArgumentException("Password must contain at least one number.");
+
+			if (!password.Any(ch => !char.IsLetterOrDigit(ch) && ch != ' '))
+				throw new ArgumentException("Password must contain at least one special character.");
+
+			var spaceCount = password.Count(ch => ch == ' ');
+			if (spaceCount > 1)
+				throw new ArgumentException("Password can contain at most one space.");
 		}
 
 	}

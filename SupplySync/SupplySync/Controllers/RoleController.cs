@@ -1,4 +1,5 @@
 ﻿// /SupplySync/Controllers/RoleController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplySync.Constants.Enums;
 using SupplySync.DTOs.Role;
@@ -15,6 +16,7 @@ namespace SupplySync.Controllers
 
 		// GET /roles?pageNumber=1&pageSize=10
 		[HttpGet("roles")]
+		[Authorize(Roles = "Admin")] // Only Admins can list roles
 		public async Task<IActionResult> List([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
 		{
 			var result = await _roleService.ListRolesAsync(pageNumber, pageSize);
@@ -23,6 +25,7 @@ namespace SupplySync.Controllers
 
 
 		[HttpGet("roles/{roleType}/users")]
+		[Authorize(Roles = "Admin")] // Only Admins can list users by role
 		public async Task<IActionResult> ListUsersByRole([FromRoute] string roleType, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
 		{
 			if (!Enum.TryParse<RoleType>(roleType, ignoreCase: true, out var parsed)) return BadRequest(new { Message = $"Invalid roleType '{roleType}'." });

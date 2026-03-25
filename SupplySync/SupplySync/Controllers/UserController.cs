@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SupplySync.DTOs.User;
 using SupplySync.Services.Interfaces;
 
@@ -16,6 +17,7 @@ namespace SupplySync.Controllers
 
 
 		[HttpPost("create")]
+		[AllowAnonymous]
 		public async Task<IActionResult> Create([FromBody] CreateUserRequestDto dto)
 		{
 			var id = await _userService.CreateUserAsync(dto);
@@ -23,6 +25,7 @@ namespace SupplySync.Controllers
 		}
 
 		[HttpPut("update/{id:int}")]
+		[Authorize]
 		public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequestDto dto)
 		{
 			if (id != dto.UserID) return BadRequest(new { Message = "Route id and body UserID must match." });
@@ -33,6 +36,7 @@ namespace SupplySync.Controllers
 
 
 		[HttpGet("users/{id:int}")]
+		[Authorize]
 		public async Task<IActionResult> GetById(int id)
 		{
 			var result = await _userService.GetUserAsync(id);
@@ -41,6 +45,7 @@ namespace SupplySync.Controllers
 
 
 		[HttpGet("users")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> List([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
 		{
 			var result = await _userService.ListUsersAsync(pageNumber, pageSize);
