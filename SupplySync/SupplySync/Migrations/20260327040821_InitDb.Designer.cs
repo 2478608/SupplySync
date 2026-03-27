@@ -12,8 +12,8 @@ using SupplySync.Config;
 namespace SupplySync.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260324050342_init1")]
-    partial class init1
+    [Migration("20260327040821_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -884,7 +884,13 @@ namespace SupplySync.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
                     b.HasKey("VendorID");
+
+                    b.HasIndex("UserID")
+                        .IsUnique();
 
                     b.ToTable("Vendor");
                 });
@@ -1157,6 +1163,17 @@ namespace SupplySync.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SupplySync.Models.Vendor", b =>
+                {
+                    b.HasOne("SupplySync.Models.User", "User")
+                        .WithOne()
+                        .HasForeignKey("SupplySync.Models.Vendor", "UserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

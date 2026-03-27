@@ -22,6 +22,10 @@ namespace SupplySync.Controllers
 		/// Contract endpoints
 		/// </summary>
 
+		/// <summary>
+		/// Retrieves all contracts associated with the specified vendor ID,
+		/// applying any provided filter criteria.
+		/// </summary>
 		[Authorize]
 		[HttpGet("vendor/{vendorId}")]
 		public async Task<IActionResult> GetAllContractsByVendorId([FromRoute] int vendorId, [FromQuery] ContractFiltersRequestDto contractFiltersRequestDto) {
@@ -31,6 +35,9 @@ namespace SupplySync.Controllers
 			return Ok(contractWithTermsResponseDtos);
 		}
 
+		/// <summary>
+		/// Retrieves a single contract using its unique contract ID.
+		/// </summary>
 		[Authorize]
 		[HttpGet("{contractId}")]
 		public async Task<IActionResult> GetContractById([FromRoute] int contractId)
@@ -39,6 +46,10 @@ namespace SupplySync.Controllers
 			return Ok(contractResponseDto);
 		}
 
+		/// <summary>
+		/// Creates a new contract based on the provided contract details.
+		/// Accessible by VendorUser and Admin roles.
+		/// </summary>
 		[Authorize(Roles = "VendorUser,Admin")]
 		[HttpPost("")]
 		public async Task<IActionResult> CreateContract([FromBody] CreateContractRequestDto createContractRequestDto)
@@ -47,6 +58,9 @@ namespace SupplySync.Controllers
 			return Ok(contractResponseDto);
 		}
 
+		/// <summary>
+		/// Updates an existing contract identified by the given contract ID.
+		/// </summary>
 		[Authorize(Roles = "VendorUser,Admin")]
 		[HttpPut("{contractId}")]
 		public async Task<IActionResult> UpdateContract([FromRoute] int contractId, UpdateContractRequestDto updateContractRequestDto)
@@ -61,6 +75,10 @@ namespace SupplySync.Controllers
 		/// Contract Terms endpoints
 		/// </summary>
 
+		/// <summary>
+		/// Creates a new contract term for the specified contract.
+		/// Accessible by VendorUser and Admin roles.
+		/// </summary>
 		[Authorize(Roles = "VendorUser,Admin")]
 		[HttpPost("{contractId}/terms")]
 		public async Task<IActionResult> CreateContractTerm([FromBody] CreateContractTermRequestDto createContractTermRequestDto)
@@ -68,7 +86,10 @@ namespace SupplySync.Controllers
 			ContractTermResponseDto contractTermResponseDto = await _contractService.CreateContractTerm(createContractTermRequestDto);
 			return Ok(contractTermResponseDto);
 		}
-
+		/// <summary>
+		/// Retrieves all contract terms for the specified contract ID,
+		/// with optional filter criteria.
+		/// </summary>
 		[Authorize]
 		[HttpGet("{contractId}/terms")]
 		public async Task<IActionResult> GetAllContractTermByContractId([FromRoute] int contractId,[FromQuery] ContractTermFiltersRequestDto contractTermFiltersRequestDto)

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SupplySync.Migrations
 {
     /// <inheritdoc />
-    public partial class init1 : Migration
+    public partial class InitDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -65,25 +65,6 @@ namespace SupplySync.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.UserID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Vendor",
-                columns: table => new
-                {
-                    VendorID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    ContactInfo = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Vendor", x => x.VendorID);
                 });
 
             migrationBuilder.CreateTable(
@@ -184,6 +165,58 @@ namespace SupplySync.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Vendor",
+                columns: table => new
+                {
+                    VendorID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    ContactInfo = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "GETUTCDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Vendor", x => x.VendorID);
+                    table.ForeignKey(
+                        name: "FK_Vendor_User_UserID",
+                        column: x => x.UserID,
+                        principalTable: "User",
+                        principalColumn: "UserID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Inventory",
+                columns: table => new
+                {
+                    InventoryID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WarehouseID = table.Column<int>(type: "int", nullable: false),
+                    Item = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    DateAdded = table.Column<DateTime>(type: "date", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Inventory", x => x.InventoryID);
+                    table.ForeignKey(
+                        name: "FK_Inventory_Warehouse_WarehouseID",
+                        column: x => x.WarehouseID,
+                        principalTable: "Warehouse",
+                        principalColumn: "WarehouseID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Contract",
                 columns: table => new
                 {
@@ -232,32 +265,6 @@ namespace SupplySync.Migrations
                         column: x => x.VendorID,
                         principalTable: "Vendor",
                         principalColumn: "VendorID",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Inventory",
-                columns: table => new
-                {
-                    InventoryID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    WarehouseID = table.Column<int>(type: "int", nullable: false),
-                    Item = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    DateAdded = table.Column<DateTime>(type: "date", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Inventory", x => x.InventoryID);
-                    table.ForeignKey(
-                        name: "FK_Inventory_Warehouse_WarehouseID",
-                        column: x => x.WarehouseID,
-                        principalTable: "Warehouse",
-                        principalColumn: "WarehouseID",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -605,6 +612,12 @@ namespace SupplySync.Migrations
                 filter: "[IsDeleted] = 0");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Vendor_UserID",
+                table: "Vendor",
+                column: "UserID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_VendorDocument_VendorID",
                 table: "VendorDocument",
                 column: "VendorID");
@@ -659,9 +672,6 @@ namespace SupplySync.Migrations
                 name: "Role");
 
             migrationBuilder.DropTable(
-                name: "User");
-
-            migrationBuilder.DropTable(
                 name: "PurchaseOrder");
 
             migrationBuilder.DropTable(
@@ -669,6 +679,9 @@ namespace SupplySync.Migrations
 
             migrationBuilder.DropTable(
                 name: "Vendor");
+
+            migrationBuilder.DropTable(
+                name: "User");
         }
     }
 }

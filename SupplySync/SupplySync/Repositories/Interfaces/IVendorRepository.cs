@@ -14,5 +14,7 @@ namespace SupplySync.Repositories.Interfaces
 		public Task<VendorDocument> CreateVendorDocument(VendorDocument newVendorDocument);
 		Task<List<VendorDocument>> GetAllVendorDocuments(int vendorId);
 		Task<List<Vendor>> GetAllVendorWithFilter(GetVendorFiltersRequestDto getVendorFiltersRequestDto);
+		Task<bool> DeleteVendorById(int vendorId);
+		Task<bool> DeleteVendorDocument(int documentId);
 	}
 }

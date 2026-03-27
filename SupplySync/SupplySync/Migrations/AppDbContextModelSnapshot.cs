@@ -881,7 +881,13 @@ namespace SupplySync.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
                     b.HasKey("VendorID");
+
+                    b.HasIndex("UserID")
+                        .IsUnique();
 
                     b.ToTable("Vendor");
                 });
@@ -1154,6 +1160,17 @@ namespace SupplySync.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SupplySync.Models.Vendor", b =>
+                {
+                    b.HasOne("SupplySync.Models.User", "User")
+                        .WithOne()
+                        .HasForeignKey("SupplySync.Models.Vendor", "UserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
