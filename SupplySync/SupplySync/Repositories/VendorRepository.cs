@@ -41,7 +41,7 @@ namespace SupplySync.Repositories
 				query = query.Where(v => v.Status == filters.Status);
 			}
 
-
+			query = query.Where(v => !v.IsDeleted);
 			return await query
 						.Skip((filters.Page - 1) * filters.PageSize)
 						.Take(filters.PageSize)
@@ -61,6 +61,19 @@ namespace SupplySync.Repositories
 			return vendor;
 		}
 
+		public async Task<bool> DeleteVendorById(int vendorId)
+		{
+			Vendor? vendor = await GetVendorById(vendorId);
+			if (vendor == null || vendor.IsDeleted == true)
+			{
+				throw new KeyNotFoundException($"Vendor with ID {vendorId} not found.");
+			}
+
+			vendor.IsDeleted = true;
+			vendor.UpdatedAt = DateTime.UtcNow;
+			await _appDbContext.SaveChangesAsync();
+			return true;
+		}
 
 		public async Task<VendorDocument?> GetVendorDocumentById(int vendorDocumentId)
 		{
@@ -77,11 +90,22 @@ namespace SupplySync.Repositories
 
 		public async Task<List<VendorDocument>> GetAllVendorDocuments(int vendorId)
 		{
-			return await _appDbContext.VendorDocuments.Where(x => x.VendorID == vendorId).ToListAsync();
+			return await _appDbContext.VendorDocuments.Where(x => x.VendorID == vendorId && !x.IsDeleted).ToListAsync();
 
 		}
 
-
+		public async Task<bool> DeleteVendorDocument(int documentId)
+		{
+			VendorDocument? vendorDocument = await GetVendorDocumentById(documentId);
+			if (vendorDocument == null || vendorDocument.IsDeleted == true)
+			{
+				throw new KeyNotFoundException($"Document with ID {documentId} not found.");
+			}
+			vendorDocument.IsDeleted = true;
+			vendorDocument.UpdatedAt = DateTime.UtcNow;
+			await _appDbContext.SaveChangesAsync();
+			return true;
+		}
 	}
 
 }

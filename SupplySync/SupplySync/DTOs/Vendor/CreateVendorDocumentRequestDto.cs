@@ -6,7 +6,7 @@ namespace SupplySync.DTOs.Vendor
 	{
 		public int? VendorID { get; set; }
 		public VendorDocumentDocType DocType { get; set; }
-		public IFormFile? DocFile { get; set; }
+		public IFormFile DocFile { get; set; }
 
 	}
 }

@@ -5,6 +5,8 @@ namespace SupplySync.DTOs.Vendor
 {
 	public class CreateVendorRequestDto
 	{
+		[Required]
+		public int UserID { get; set; }
 		public string Name { get; set; }
 		public string ContactInfo { get; set; }
 		public VendorCategory Category { get; set; }

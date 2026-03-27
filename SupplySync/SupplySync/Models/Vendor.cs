@@ -10,6 +10,11 @@ namespace SupplySync.Models
 		[Key]
 		public int VendorID { get; set; }
 
+		[Required]
+		public int UserID { get; set; }  
+
+		public User User { get; set; }
+
 		[Required, MaxLength(150)]
 		public string Name { get; set; }  
 

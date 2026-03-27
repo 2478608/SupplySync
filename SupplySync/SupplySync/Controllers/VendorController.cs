@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SupplySync.DTOs.Vendor;
+using SupplySync.Models;
+using SupplySync.Services;
 using SupplySync.Services.Interfaces;
 
 namespace SupplySync.Controllers
@@ -16,25 +20,27 @@ namespace SupplySync.Controllers
 		{
 			_vendorService = vendorService;
 		}
-
+		
 		/// <summary>
 		///  Vendor Endpoints
 		/// </summary>
 
 		/// <summary>
-		///  get Vendor
+		/// Retrieves a vendor by its unique vendor ID.
 		/// </summary>
-		
+
 		[Authorize]
 		[HttpGet("{vendorId}")]
 		public async Task<IActionResult> GetVendorById([FromRoute] int vendorId)
 		{
-			VendorResponseDto vendorResponseDto = await _vendorService.GetVendorById(vendorId);
+			var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+			VendorResponseDto vendorResponseDto = await _vendorService.GetVendorById(userId, vendorId);
 			return Ok(vendorResponseDto);
 		}
 
 		/// <summary>
-		///  get All Vendor with filter
+		/// Retrieves all vendors based on the provided filter criteria.
+		/// Only users with specific roles are authorized to access this endpoint.
 		/// </summary>
 		[Authorize(Roles = "Admin,ProcurementOfficer,WarehouseManager,FinanceOfficer,ComplianceOfficer")]
 		[HttpGet("")]
@@ -47,19 +53,28 @@ namespace SupplySync.Controllers
 
 
 		/// <summary>
-		///  Create Vendor
+		/// Creates a new vendor in the system.
 		/// </summary>
 		[HttpPost("")]
 		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequestDto createVendorRequestDto)
 		{
-			VendorResponseDto createdVendor = await _vendorService.CreateVendor(createVendorRequestDto);
 
-			return Ok(createdVendor);
-		}
+
+			try
+			{
+				VendorResponseDto createdVendor = await _vendorService.CreateVendor(createVendorRequestDto);
+
+				return Ok(createdVendor);
+			}
+			catch (DbUpdateException e)
+			{
+				throw new InvalidOperationException("Database Error, May Data Already Available.");
+			}
+}
 
 		/// <summary>
-		///  update Vendor
+		/// Updates vendor information for the specified vendor ID.
 		/// </summary>
 		[Authorize(Roles = "Admin,VendorUser")]
 		[HttpPut("{vendorId}")]
@@ -70,13 +85,22 @@ namespace SupplySync.Controllers
 			return Ok(vendorResponseDto);
 		}
 
+		/// <summary>
+		/// Deletes the vendor associated with the specified vendor ID.
+		/// </summary>
+		[Authorize(Roles = "Admin")]
+		[HttpDelete("{vendorId}")]
+		public async Task<IActionResult> DeleteVendorById([FromRoute] int vendorId) {
+			bool isDeleted = await _vendorService.DeleteVendorById(vendorId);
+			return Ok(isDeleted);
+		}
 
 		/// <summary>
 		///  Vendor Document Endpoints
 		/// </summary>
 
 		/// <summary>
-		///  get All Vendor Document
+		/// Retrieves all documents associated with the specified vendor.
 		/// </summary>
 		[Authorize]
 		[HttpGet("{vendorId}/documents")]
@@ -87,15 +111,30 @@ namespace SupplySync.Controllers
 		}
 
 		/// <summary>
-		///  Create Vendor Document
+		/// Creates and uploads a new document for the specified vendor.
+		/// A document file is required.
 		/// </summary>
 		[Authorize(Roles = "Admin,VendorUser")]
 		[HttpPost("{vendorId}/documents")]
-		public async Task<IActionResult> CreateVendorDocument([FromBody] CreateVendorDocumentRequestDto createVendorDocumentRequestDto)
+		public async Task<IActionResult> CreateVendorDocument([FromForm] CreateVendorDocumentRequestDto createVendorDocumentRequestDto)
 		{
+			if(createVendorDocumentRequestDto.DocFile == null)
+			{
+				throw new ArgumentException("File is required.");
+			}
 			VendorDocumentResponseDto createdVendorDocument = await _vendorService.CreateVendorDocument(createVendorDocumentRequestDto);
 			return Ok(createdVendorDocument);
 		}
 
+		/// <summary>
+		/// Deletes a specific vendor document using the vendor ID and document ID.
+		/// </summary>
+		[Authorize(Roles = "Admin,VendorUser")]
+		[HttpDelete("{vendorId}/documents/{documentId}")]
+		public async Task<IActionResult> DeleteVendorDocument([FromRoute] int vendorId, [FromRoute] int documentId)
+		{
+			bool isDeleted = await _vendorService.DeleteVendorDocument(vendorId, documentId);
+			return Ok(isDeleted);
+		}
 	}
 }
