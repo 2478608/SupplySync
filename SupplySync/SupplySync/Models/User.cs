@@ -27,7 +27,10 @@ namespace SupplySync.Models
 		[Required]
 		public bool IsDeleted { get; set; } 
 		public DateTime CreatedAt { get; set; } 
-		public DateTime UpdatedAt { get; set; } 
+		public DateTime UpdatedAt { get; set; }
+
+		public string? RefreshToken { get; set; }
+		public DateTime? RefreshTokenExpiresAt{get; set;}
 		public ICollection<UserRole> UserRoles { get; set; } 
 	}
 }

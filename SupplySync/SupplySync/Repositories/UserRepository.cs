@@ -120,5 +120,13 @@ namespace SupplySync.Repositories
 				.ToListAsync();
 		}
 
+		public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
+		{
+			return await _context.Users
+				.FirstOrDefaultAsync(u =>
+					u.RefreshToken == refreshToken &&
+					!u.IsDeleted);
+		}
+
 	}
 }

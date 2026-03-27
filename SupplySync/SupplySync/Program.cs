@@ -28,7 +28,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // --------------------
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-
+builder.Services.AddOpenApi();
 // --------------------
 // REPOSITORIES
 // --------------------
@@ -118,6 +118,8 @@ options.TokenValidationParameters = new TokenValidationParameters
 builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

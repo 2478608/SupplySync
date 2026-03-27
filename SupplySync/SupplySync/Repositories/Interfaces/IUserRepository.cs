@@ -15,5 +15,6 @@ namespace SupplySync.Repositories.Interfaces
 		Task<(List<User> Items, int TotalCount)> GetUsersByRoleAsync(RoleType roleType, int pageNumber, int pageSize);
 		Task<User?> GetByEmailWithRolesAsync(string normalizedEmail);
 		Task<List<int>> GetActiveUserIdsByRoleTypesAsync(IEnumerable<RoleType> roleTypes);
+		Task<User?> GetByRefreshTokenAsync(string refreshToken);
 	}
 }

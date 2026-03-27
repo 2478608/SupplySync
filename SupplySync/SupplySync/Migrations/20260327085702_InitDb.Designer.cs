@@ -12,7 +12,7 @@ using SupplySync.Config;
 namespace SupplySync.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260327040821_InitDb")]
+    [Migration("20260327085702_InitDb")]
     partial class InitDb
     {
         /// <inheritdoc />
@@ -780,6 +780,12 @@ namespace SupplySync.Migrations
 
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()

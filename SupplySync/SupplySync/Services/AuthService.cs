@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -20,20 +21,23 @@ namespace SupplySync.Services
         private readonly IConfiguration _config;
         private readonly IAuditLogService _auditLogService;
         private readonly INotificationService _notificationService;
+		private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(
+		public AuthService(
             IUserRepository userRepository,
             IPasswordHasher<User> passwordHasher,
             IConfiguration config,
             IAuditLogService auditLogService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+			IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _config = config;
             _auditLogService = auditLogService;
             _notificationService = notificationService;
-        }
+			_httpContextAccessor = httpContextAccessor;
+		}
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto dto)
         {
@@ -56,8 +60,8 @@ namespace SupplySync.Services
 
 
 			await _auditLogService.WriteAsync(
-				userId: user.UserID,               // actor (or null if system)
-				userName: user.Name,               // optional (not persisted in model)
+				userId: user.UserID,               // actor
+				userName: user.Name,               // optional
 				action: "UserCreated",
 				resource: $"User:{user.UserID}"
 			);
@@ -69,49 +73,147 @@ namespace SupplySync.Services
                 Category = NotificationCategory.System
             });
 
-            // Prepare role claims (only non-deleted mappings and roles)
-            var roles = user.UserRoles
-                .Where(ur => !ur.IsDeleted && !ur.Role.IsDeleted)
-                .Select(ur => ur.Role.RoleType.ToString())
-                .Distinct()
-                .ToList();
+			var roles = user.UserRoles
+ .Where(ur => !ur.IsDeleted && !ur.Role.IsDeleted)
+ .Select(ur => ur.Role.RoleType.ToString())
+ .Distinct()
+ .ToList();
 
-            // Build JWT
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var issuer = _config["Jwt:Issuer"];
-            var audience = _config["Jwt:Audience"];
-            var expiryMinutes = int.TryParse(_config["Jwt:ExpiryMinutes"], out var m) ? m : 60;
+			var accessToken = GenerateAccessToken(user, roles, out var expiry);
 
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.Email),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            };
-            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+			// ✅ ADD REFRESH TOKEN HERE
+			var refreshToken = GenerateRefreshToken();
+			var refreshExpiry = DateTime.UtcNow.AddDays(7);
 
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-                signingCredentials: creds);
+			user.RefreshToken = refreshToken;
+			user.RefreshTokenExpiresAt = refreshExpiry;
+			await _userRepository.UpdateAsync(user);
 
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+			// ✅ SET COOKIE
+			_httpContextAccessor.HttpContext!.Response.Cookies.Append(
+				"refreshToken",
+				refreshToken,
+				GetRefreshTokenCookieOptions(refreshExpiry)
+			);
 
-            return new LoginResponseDto
-            {
-                Token = jwt,
-                ExpiresAtUtc = token.ValidTo,
-                UserID = user.UserID,
-                Name = user.Name,
-                Email = user.Email,
-                Roles = roles
-            };
-        }
-    }
+			return new LoginResponseDto
+			{
+				Token = accessToken,
+				ExpiresAtUtc = expiry,
+				UserID = user.UserID,
+				Name = user.Name,
+				Email = user.Email,
+				Roles = roles
+			};
+		}
+
+		private string GenerateRefreshToken()
+		{
+			var bytes = RandomNumberGenerator.GetBytes(64);
+			return Convert.ToBase64String(bytes);
+		}
+
+		private CookieOptions GetRefreshTokenCookieOptions(DateTime expires)
+		{
+			return new CookieOptions
+			{
+				HttpOnly = true,
+				Secure = true,              // set false only in local dev if needed
+				SameSite = SameSiteMode.Strict,
+				Expires = expires,
+				Path = "/api/auth/refresh"  // cookie sent ONLY to refresh endpoint
+			};
+		}
+
+		private string GenerateAccessToken(User user, List<string> roles, out DateTime expiresAt)
+		{
+			var key = new SymmetricSecurityKey(
+				Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
+			);
+			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+			var issuer = _config["Jwt:Issuer"];
+			var audience = _config["Jwt:Audience"];
+			var expiryMinutes = int.TryParse(_config["Jwt:ExpiryMinutes"], out var m) ? m : 60;
+
+			expiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes);
+
+			var claims = new List<Claim>
+	{
+		new Claim(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
+		new Claim(JwtRegisteredClaimNames.UniqueName, user.Email),
+		new Claim(ClaimTypes.Name, user.Name),
+		new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+		new Claim(JwtRegisteredClaimNames.Email, user.Email),
+	};
+
+			claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+
+			var token = new JwtSecurityToken(
+				issuer: issuer,
+				audience: audience,
+				claims: claims,
+				notBefore: DateTime.UtcNow,
+				expires: expiresAt,
+				signingCredentials: creds
+			);
+
+			return new JwtSecurityTokenHandler().WriteToken(token);
+		}
+
+		public async Task<(string Token, DateTime ExpiresAt)> RefreshAsync(string refreshToken)
+		{
+			if (string.IsNullOrEmpty(refreshToken))
+				throw new UnauthorizedAccessException("Refresh token missing.");
+
+			var user = await _userRepository.GetByRefreshTokenAsync(refreshToken)
+				?? throw new UnauthorizedAccessException("Invalid refresh token.");
+
+			if (user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+				throw new UnauthorizedAccessException("Refresh token expired.");
+
+			// ✅ ROTATE
+			var newRefreshToken = GenerateRefreshToken();
+			var newExpiry = DateTime.UtcNow.AddDays(7);
+
+			user.RefreshToken = newRefreshToken;
+			user.RefreshTokenExpiresAt = newExpiry;
+			await _userRepository.UpdateAsync(user);
+
+			_httpContextAccessor.HttpContext!.Response.Cookies.Append(
+				"refreshToken",
+				newRefreshToken,
+				GetRefreshTokenCookieOptions(newExpiry)
+			);
+
+			var roles = user.UserRoles
+				.Where(ur => !ur.IsDeleted && !ur.Role.IsDeleted)
+				.Select(ur => ur.Role.RoleType.ToString())
+				.Distinct()
+				.ToList();
+
+			var newAccessToken = GenerateAccessToken(user, roles, out var accessExpiry);
+
+			return (newAccessToken, accessExpiry);
+		}
+
+		public async Task LogoutAsync(string refreshToken)
+		{
+			if (string.IsNullOrEmpty(refreshToken))
+				return;
+
+			var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
+			if (user == null)
+				return;
+
+			// ✅ Revoke refresh token in DB
+			user.RefreshToken = null;
+			user.RefreshTokenExpiresAt = null;
+			await _userRepository.UpdateAsync(user);
+
+			// ✅ Remove cookie from browser
+			_httpContextAccessor.HttpContext!.Response.Cookies.Delete("refreshToken");
+		}
+
+	}
 }
