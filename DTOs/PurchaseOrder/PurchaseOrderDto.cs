@@ -1,4 +1,6 @@
-﻿namespace SupplySync.DTOs.PurchaseOrder
+﻿using SupplySync.Constants.Enums;
+
+namespace SupplySync.DTOs.PurchaseOrder
 {
     public class CreatePurchaseOrderRequestDto
     {
@@ -6,7 +8,7 @@
         public DateTime Date { get; set; }
         public string Item { get; set; } = string.Empty;
         public int Quantity { get; set; }
-        public string Status { get; set; } = "Draft";
+        public POStatus Status { get; set; } 
     }
 
     public class UpdatePurchaseOrderRequestDto

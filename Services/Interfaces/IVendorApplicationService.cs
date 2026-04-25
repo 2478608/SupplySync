@@ -13,7 +13,7 @@ namespace SupplySync.Services.Interfaces
 
         Task<VendorApplicationResponseDto?> GetByIdAsync(int applicationId);
 
-        Task<VendorApplicationResponseDto?> ApproveApplicationAsync(int applicationId);
+        Task<VendorResponseDto?> ApproveApplicationAsync(int id);
 
         Task<bool> RejectApplicationAsync(int applicationId, string reason);
     }

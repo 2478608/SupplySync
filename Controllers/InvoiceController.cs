@@ -10,6 +10,7 @@ namespace SupplySync.Controllers
     public class InvoiceController : ControllerBase
     {
         private readonly IInvoiceService _invoiceService;
+        private readonly IAuditLogService _auditLog;
 
         public InvoiceController(IInvoiceService invoiceService)
         {
@@ -22,6 +23,12 @@ namespace SupplySync.Controllers
         {
             var id = await _invoiceService.CreateInvoiceAsync(dto);
             return Ok(new{ Message = "Invoice submitted successfully", InvoiceID = id });
+
+            await _auditLog.WriteAsync(
+                1,
+                User?.Identity?.Name,
+                "Invoice.Submitted",
+                $"Invoice:{id} PO:{dto.POID}");
         }
 
         [HttpPut("{invoiceId}")]

@@ -1,8 +1,7 @@
 ﻿// /SupplySync/Services/AuditLogService.cs
 using AutoMapper;
 using SupplySync.DTOs.Audit;
-using SupplySync.DTOs.AuditLog;
-using SupplySync.DTOs.AuditLogs;
+using SupplySync.DTOs.AuditLog; 
 using SupplySync.Models;
 using SupplySync.Repositories.Interfaces;
 using SupplySync.Services.Interfaces;

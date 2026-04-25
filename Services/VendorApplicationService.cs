@@ -1,15 +1,17 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using SupplySync.Constants.Enums;
+using SupplySync.DTOs.Notification;
 using SupplySync.DTOs.Vendor;
 using SupplySync.Models;
+using SupplySync.Repositories;
 using SupplySync.Repositories.Interfaces;
-using SupplySync.Services.Interfaces;
 using SupplySync.Security;
-using SupplySync.Constants.Enums;
+using SupplySync.Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SupplySync.Services
 {
@@ -108,53 +110,64 @@ namespace SupplySync.Services
         }
 
         // ✅ APPROVE APPLICATION
-        public async Task<VendorApplicationResponseDto?> ApproveApplicationAsync(
-            int applicationId)
+        public async Task<VendorResponseDto?> ApproveApplicationAsync(int id)
         {
-            var application = await _applicationRepo.GetByIdAsync(applicationId);
-            if (application == null || application.Status != VendorStatus.Pending)
+            var app = await _applicationRepo.GetByIdAsync(id);
+
+            // ✅ Guard clause – prevents double approval
+            if (app == null || app.Status != VendorStatus.Pending)
                 return null;
 
-            // Create Vendor
-            var vendor = await _vendorRepo.CreateVendor(new Vendor
+            // 1️⃣ Create Vendor from Application
+            var vendor = new Vendor
             {
-                Name = application.Name,
-                ContactInfo = application.ContactInfo,
-                Category = application.Category,
+                Name = app.Name,
+                ContactInfo = app.ContactInfo,
+                Category = app.Category,
                 Status = VendorStatus.Approved,
+                UserId= app.UserId,
                 CreatedAt = DateTime.UtcNow
-            });
+            };
 
-            // Move Documents
-            if (application.Documents != null)
+            await _vendorRepo.CreateVendor(vendor);
+
+            // 2️⃣ Copy Documents
+            if (app.Documents != null)
             {
-                foreach (var doc in application.Documents)
+                foreach (var doc in app.Documents)
                 {
                     await _vendorRepo.CreateVendorDocument(new VendorDocument
                     {
                         VendorID = vendor.VendorID,
                         DocType = doc.DocType,
                         FileURI = doc.FileURI,
-                        UploadedDate = doc.UploadedDate,
-                        VerificationStatus = doc.VerificationStatus,
-                        CreatedAt = DateTime.UtcNow,
-                        IsDeleted = false
+                        UploadedDate = DateTime.UtcNow,
+                        VerificationStatus = VendorDocumentVerificationStatus.Verified
                     });
                 }
             }
 
-            application.Status = VendorStatus.Approved;
-            application.UpdatedAt = DateTime.UtcNow;
-            await _applicationRepo.UpdateAsync(application);
+            // 3️⃣ Update Application Status
+            app.Status = VendorStatus.Approved;
+            await _applicationRepo.UpdateAsync(app);
 
-            var user = _httpContextAccessor.HttpContext?.User;
-            await _auditLogService.WriteAsync(
-                user?.GetUserId(),
-                user?.Identity?.Name,
-                "VendorApplication.Approved",
-                $"Application:{applicationId}, Vendor:{vendor.VendorID}");
+            // 4️⃣ Send Notification (SAFE)
+            try
+            {
+                await _notificationService.SendAsync(new CreateBulkNotificationRequestDto
+                {
+                    Message = "Your vendor application has been approved.",
+                    Category = NotificationCategory.System,
+                    RoleTypes = new List<RoleType> { RoleType.VendorUser }
+                });
+            }
+            catch (Exception ex)
+            {
+                // ✅ Log error, but DO NOT fail approval
+                // _logger.LogError(ex, "Notification failed for vendor approval");
+            }
 
-            return _mapper.Map<VendorApplicationResponseDto>(application);
+            return _mapper.Map<VendorResponseDto>(vendor);
         }
 
         // ✅ REJECT APPLICATION

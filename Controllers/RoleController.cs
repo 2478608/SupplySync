@@ -1,4 +1,5 @@
 ﻿// /SupplySync/Controllers/RoleController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplySync.Constants.Enums;
 using SupplySync.DTOs.Role;
@@ -7,6 +8,7 @@ using SupplySync.Services.Interfaces;
 namespace SupplySync.Controllers
 {
 	[ApiController]
+	//[Authorize(Roles = "Admin")]
 	[Route("api/[controller]")]
 	public class RoleController : ControllerBase
 	{

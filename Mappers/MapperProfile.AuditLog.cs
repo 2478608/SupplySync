@@ -1,4 +1,4 @@
-﻿using SupplySync.DTOs.AuditLogs;
+﻿using SupplySync.DTOs.AuditLog;
 using SupplySync.Models;
 
 namespace SupplySync.Mappers

@@ -24,24 +24,31 @@ namespace SupplySync.Services
         public async Task<int> CreatePaymentAsync(CreatePaymentRequestDto dto)
         {
             var invoice = await _invoiceRepository.GetByIdAsync(dto.InvoiceId);
-            if (invoice == null) throw new KeyNotFoundException("Invoice not found.");
+
+            if (invoice == null)
+                throw new Exception("Invoice not found.");
 
             if (invoice.Status != InvoiceStatus.Approved)
-                throw new InvalidOperationException("Payment can only be created for approved invoices.");
+                throw new Exception("Payment allowed only for approved invoices.");
 
-            if (dto.Amount <= 0 || dto.Amount > invoice.Amount)
-                throw new ArgumentException("Invalid payment amount.");
+            var payment = new Payment
+            {
+                InvoiceId = dto.InvoiceId,
+                Amount = dto.Amount,
+                Date = dto.Date,
+                //Method = dto.Method
+                Status = PaymentStatus.Success,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            if (!Enum.TryParse<PaymentMethod>(dto.Method, true, out var method))
-                throw new ArgumentException($"'{dto.Method}' is not a valid payment method. " +
-                                            $"Allowed: NEFT, RTGS, IMPS, Cheque, UPI");
+            await _paymentRepository.InsertAsync(payment);
 
-            var payment = _mapper.Map<Payment>(dto);
-            payment.Method = method;
-            var createdPayment = await _paymentRepository.InsertAsync(payment);
+            invoice.Status = InvoiceStatus.Paid;
+            await _invoiceRepository.UpdateAsync(invoice);
 
-            return createdPayment.PaymentId;
+            return payment.PaymentId;
         }
+
 
         public async Task UpdatePaymentAsync(int id, UpdatePaymentRequestDto dto)
         {

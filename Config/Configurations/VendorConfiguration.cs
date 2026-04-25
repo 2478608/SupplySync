@@ -19,6 +19,10 @@ namespace SupplySync.Config.Configurations
             builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).HasDefaultValue(VendorStatus.Pending);
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            builder.HasOne(x => x.User)
+                   .WithMany()
+                   .HasForeignKey(x => x.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 

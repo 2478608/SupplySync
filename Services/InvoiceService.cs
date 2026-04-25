@@ -147,7 +147,7 @@ namespace SupplySync.Services
                         InvoiceId = existing.InvoiceId,
                         Amount = existing.Amount,
                         Date = DateTime.UtcNow,
-                        Method = "NEFT" // default method; adjust if you need different flow
+                        //Method = "NEFT" // default method; adjust if you need different flow
                     };
 
                     var paymentId = await _paymentService.CreatePaymentAsync(paymentDto);

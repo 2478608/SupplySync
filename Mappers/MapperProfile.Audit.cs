@@ -10,7 +10,7 @@ namespace SupplySync.Mappers
         {
 
             CreateMap<CreateAuditRequestDto, Audit>()
-                            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ConvertAuditStatus(src.Status)))
+                            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ConvertAuditStatus(src.Status.ToString())))
                             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                             .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(_ => false));
 

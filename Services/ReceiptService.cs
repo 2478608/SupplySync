@@ -47,96 +47,25 @@ namespace SupplySync.Services
 
         public async Task<int> CreateAsync(CreateReceiptRequestDto dto)
         {
-            if (dto == null)
-            {
-                throw new ArgumentException("Receipt data is required.");
-            }
-
-            // Validate warehouse exists
-            Warehouse? warehouse = await _warehouseRepository.GetByIdAsync(dto.WarehouseID);
-            if (warehouse == null || warehouse.IsDeleted == true)
-            {
-                throw new ArgumentException($"Warehouse with ID {dto.WarehouseID} not available.");
-            }
-
-            // Validate delivery exists
             var delivery = await _deliveryRepository.GetByIdAsync(dto.DeliveryID);
-            if (delivery == null || delivery.IsDeleted)
-            {
-                throw new ArgumentException($"Delivery with ID {dto.DeliveryID} not available.");
-            }
 
-            // Map and persist receipt
-            Receipt newReceipt = _mapper.Map<Receipt>(dto);
-            newReceipt.CreatedAt = DateTime.UtcNow;
-            newReceipt.IsDeleted = false;
+            if (delivery == null)
+                throw new Exception("Delivery not found.");
 
-            Receipt receipt = await _receiptRepository.InsertAsync(newReceipt);
+            if (dto.Quantity > delivery.Quantity)
+                throw new Exception("Received quantity cannot exceed delivered quantity.");
 
-            if (receipt == null)
+            var receipt = new Receipt
             {
-                throw new ArgumentException("Receipt not created. An error occurred.");
-            }
+                DeliveryID = dto.DeliveryID,
+                WarehouseID = dto.WarehouseID,
+                Date = dto.Date,
+                Quantity = dto.Quantity,
+                Status = dto.Status,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            // Update inventory: try to find existing inventory row by warehouse + item
-            // Prefer delivery.Item; fall back to receipt.Quantity if needed.
-            var itemName = delivery.Item ?? string.Empty;
-            var qty = receipt.Quantity;
-
-            if (!string.IsNullOrWhiteSpace(itemName) && qty > 0)
-            {
-                var existingInv = await _inventoryRepository.GetByWarehouseAndItemAsync(dto.WarehouseID, itemName);
-                if (existingInv != null)
-                {
-                    existingInv.Quantity += qty;
-                    existingInv.UpdatedAt = DateTime.UtcNow;
-                    await _inventory_repository_update(existingInv);
-                }
-                else
-                {
-                    var inv = new Inventory
-                    {
-                        WarehouseID = dto.WarehouseID,
-                        Item = itemName,
-                        Quantity = qty,
-                        DateAdded = DateOnly.FromDateTime(DateTime.UtcNow),
-                        IsDeleted = false,
-                        Status = InventoryStatus.InStock,
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    await _inventoryRepository.InsertAsync(inv);
-                }
-            }
-
-            // Audit (best-effort)
-            try
-            {
-                await _auditLogService.WriteAsync(
-                    null,
-                    null,
-                    "Receipt.Created",
-                    $"Receipt:{receipt.ReceiptID} Delivery:{receipt.DeliveryID} Warehouse:{receipt.WarehouseID}");
-            }
-            catch
-            {
-                // non-fatal
-            }
-
-            // Notify Procurement Officer(s) that goods were received (best-effort)
-            try
-            {
-                var notifyDto = new CreateBulkNotificationRequestDto
-                {
-                    Message = $"Receipt created for Delivery #{receipt.DeliveryID} (Receipt #{receipt.ReceiptID}) at Warehouse #{receipt.WarehouseID}. Item: {itemName}, Qty: {qty}",
-                    Category = NotificationCategory.System,
-                    RoleTypes = new List<Constants.Enums.RoleType> { Constants.Enums.RoleType.ProcurementOfficer }
-                };
-                await _notificationService.SendAsync(notifyDto);
-            }
-            catch
-            {
-                // keep flow robust
-            }
+            await _receiptRepository.InsertAsync(receipt);
 
             return receipt.ReceiptID;
         }

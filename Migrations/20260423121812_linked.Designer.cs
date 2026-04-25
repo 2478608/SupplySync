@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupplySync.Config;
 
@@ -11,9 +12,11 @@ using SupplySync.Config;
 namespace SupplySync.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260423121812_linked")]
+    partial class linked
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -839,15 +842,10 @@ namespace SupplySync.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int?>("warehouseId")
-                        .HasColumnType("int");
-
                     b.HasKey("UserID");
 
                     b.HasIndex("Email")
                         .IsUnique();
-
-                    b.HasIndex("warehouseId");
 
                     b.ToTable("User");
                 });
@@ -1307,14 +1305,6 @@ namespace SupplySync.Migrations
                     b.Navigation("Delivery");
 
                     b.Navigation("Warehouse");
-                });
-
-            modelBuilder.Entity("SupplySync.Models.User", b =>
-                {
-                    b.HasOne("SupplySync.Models.Warehouse", null)
-                        .WithMany()
-                        .HasForeignKey("warehouseId")
-                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("SupplySync.Models.UserRole", b =>

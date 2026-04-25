@@ -1,7 +1,6 @@
 ﻿// /SupplySync/Services/Interfaces/IAuditLogService.cs
 using SupplySync.DTOs.Audit;
-using SupplySync.DTOs.AuditLog;
-using SupplySync.DTOs.AuditLogs;
+using SupplySync.DTOs.AuditLog; 
 
 namespace SupplySync.Services.Interfaces
 {

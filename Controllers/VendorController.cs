@@ -35,13 +35,13 @@ namespace SupplySync.Controllers
             return Ok(list);
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpPost("")]
-        public async Task<IActionResult> CreateVendor([FromBody] CreateVendorApplicationDocumentDto createVendorRequestDto)
-        {
-            var created = await _vendorService.CreateVendor(createVendorRequestDto);
-            return Ok(created);
-        }
+        //[Authorize(Roles = "Admin")]
+        //[HttpPost("")]
+        //public async Task<IActionResult> CreateVendor([FromBody] CreateVendorApplicationDocumentDto createVendorRequestDto)
+        //{
+        //    var created = await _vendorService.CreateVendor(createVendorRequestDto);
+        //    return Ok(created);
+        //}
 
         [Authorize(Roles = "Admin,VendorUser")]
         [HttpPut("{vendorId}")]
@@ -66,6 +66,15 @@ namespace SupplySync.Controllers
         {
             var created = await _vendorApplicationService.CreateApplicationAsync(dto);
             return Ok(created);
+        }
+
+        [Authorize(Roles = "ProcurementOfficer,Admin")]
+        [HttpGet("applications/{id}")]
+        public async Task<IActionResult> GetApplication([FromRoute] int id)
+        {
+            var dto = await _vendorApplicationService.GetByIdAsync(id);
+            if (dto == null) return NotFound();
+            return Ok(dto);
         }
 
         /// <summary>

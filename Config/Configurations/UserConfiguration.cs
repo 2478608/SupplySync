@@ -26,6 +26,10 @@ namespace SupplySync.Config.Configurations
             builder.HasQueryFilter(ur => !ur.IsDeleted);
 			builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             builder.Property(x => x.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            builder.HasOne<Warehouse>()
+                .WithMany()
+                .HasForeignKey(u => u.warehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 

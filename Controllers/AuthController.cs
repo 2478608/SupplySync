@@ -17,7 +17,8 @@ namespace SupplySync.Controllers
 			_authService = authService;
 		}
 
-		[HttpPost("login")]
+        [AllowAnonymous]
+        [HttpPost("login")]
 		public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
 		{
 				var result = await _authService.LoginAsync(dto);

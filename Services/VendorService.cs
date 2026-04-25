@@ -2,6 +2,8 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SupplySync.Config;
 using SupplySync.DTOs.Vendor;
 using SupplySync.Models;
 using SupplySync.Repositories.Interfaces;
@@ -13,16 +15,19 @@ namespace SupplySync.Services
 	{
 		private readonly IVendorRepository _vendorRepository;
 		private readonly IMapper _mapper;
+		private readonly AppDbContext _context;
 
-		public VendorService(IVendorRepository vendorRepository, IMapper mapper)
+		public VendorService(IVendorRepository vendorRepository, IMapper mapper , AppDbContext context)
 		{
 			_vendorRepository = vendorRepository;
 			_mapper = mapper;
+			_context = context;
 		}
 
 		/// <summary>
 		///  Vendor Endpoints
 		/// </summary>
+
 
 
 		public async Task<VendorResponseDto> GetVendorById(int vendorId)
@@ -36,6 +41,12 @@ namespace SupplySync.Services
 			return _mapper.Map<VendorResponseDto>(vendor);
 		}
 
+		public async Task<int?> GetVendorIdByUserId(int userId)
+		{
+			var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == userId && !v.IsDeleted);
+			return vendor?.VendorID;
+		}
+
 		public async Task<List<VendorResponseDto>> GetAllVendorWithFilter(GetVendorFiltersRequestDto getVendorFiltersRequestDto)
 		{
 			List<Vendor> vendors = await _vendorRepository.GetAllVendorWithFilter(getVendorFiltersRequestDto);
@@ -45,22 +56,7 @@ namespace SupplySync.Services
 			}
 			List<VendorResponseDto> vendorResponseDtos = _mapper.Map<List<VendorResponseDto>>(vendors);
 			return vendorResponseDtos;
-		}
-
-		public async Task<VendorResponseDto> CreateVendor(CreateVendorApplicationDocumentDto createVendorRequestDto)
-		{
-			Vendor newVendor = _mapper.Map<Vendor>(createVendorRequestDto);
-			// after mapping we will get vendor
-
-			Vendor? vendor =  await _vendorRepository.CreateVendor(newVendor);
-			if (vendor == null) {
-				throw new ArgumentException("Vendor Not Created, some error occured");
-			}
-			// map with response dto
-			VendorResponseDto vendorResponseDto = _mapper.Map<VendorResponseDto>(vendor);
-
-			return vendorResponseDto;
-		}
+		} 
 
 		public async Task<VendorResponseDto?> UpdateVendor(int vendorId, UpdateVendorRequestDto updateVendorRequestDto)
 		{

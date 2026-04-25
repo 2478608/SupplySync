@@ -21,31 +21,33 @@ namespace SupplySync.Services
 
         public async Task<int> CreateAsync(CreateInventoryRequestDto dto)
         {
-            if (dto == null)
+            var existing = await _inventoryRepository.GetByWarehouseAndItemAsync(dto.WarehouseID, dto.Item);
+
+            if (existing != null)
             {
-                throw new ArgumentException("Inventory data is required.");
+                existing.Quantity += dto.Quantity;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                await _inventoryRepository.UpdateAsync(existing);
+
+                return existing.InventoryID;
             }
 
-            // Validate warehouse exists
-            Warehouse? warehouse = await _warehouseRepository.GetByIdAsync(dto.WarehouseID);
-            if (warehouse == null || warehouse.IsDeleted == true)
+            var inventory = new Inventory
             {
-                throw new ArgumentException($"Warehouse with ID {dto.WarehouseID} not available.");
-            }
+                WarehouseID = dto.WarehouseID,
+                Item = dto.Item,
+                Quantity = dto.Quantity,
+                DateAdded = dto.DateAdded,
+                Status = dto.Status,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            Inventory newInventory = _mapper.Map<Inventory>(dto);
-            newInventory.CreatedAt = DateTime.UtcNow;
-            newInventory.IsDeleted = false;
-
-            Inventory inventory = await _inventoryRepository.InsertAsync(newInventory);
-
-            if (inventory == null)
-            {
-                throw new ArgumentException("Inventory not created. An error occurred.");
-            }
+            await _inventoryRepository.InsertAsync(inventory);
 
             return inventory.InventoryID;
         }
+
 
         public async Task<InventoryResponseDto?> GetByIdAsync(int inventoryId)
         {
